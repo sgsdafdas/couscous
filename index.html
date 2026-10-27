@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오늘 뭐 먹지? | 메뉴 추천</title>
+<style>
+:root{--ink:#202b3c;--muted:#68758a;--brand:#315de8;--brand2:#eaf0ff;--line:#e1e7f0;--bg:#f5f7fb;--card:#fff;--green:#157347;--orange:#a85b00;--shadow:0 12px 34px rgba(27,45,80,.08)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:var(--ink);line-height:1.55}
+header{background:linear-gradient(120deg,#2348c7,#5278f4);color:white;padding:34px 20px 28px}
+.hero{max-width:1080px;margin:auto}.eyebrow{font-size:13px;letter-spacing:.08em;opacity:.85;font-weight:700}.hero h1{font-size:clamp(27px,4vw,39px);margin:7px 0}.hero p{margin:0;opacity:.92}
+main{max-width:1080px;margin:24px auto;padding:0 18px 42px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(270px,.9fr);gap:18px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow);margin-bottom:16px}.panel h2{font-size:19px;margin:0 0 13px}.step{display:inline-flex;align-items:center;justify-content:center;background:var(--brand2);color:var(--brand);font-size:12px;font-weight:800;border-radius:7px;padding:4px 8px;margin-bottom:8px}
+.muted{color:var(--muted);font-size:13px}.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.row input[type=text],.row input[type=number],input[type=text],select{font:inherit;border:1px solid #ccd5e4;border-radius:10px;padding:11px 12px;background:white;min-width:0}
+input[type=text]{width:100%}.row .grow{flex:1;min-width:190px}
+button,.button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:11px 15px;cursor:pointer;background:var(--brand);color:white}
+button.secondary{background:#edf1f8;color:#26344b}button.ghost{background:white;border:1px solid var(--line);color:var(--ink)}button:disabled{opacity:.45;cursor:not-allowed}
+.choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.choice-grid.five{grid-template-columns:repeat(5,minmax(0,1fr))}
+.choice{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:12px;cursor:pointer;background:white}.choice:has(input:checked){border-color:var(--brand);background:var(--brand2);color:#2348c7;font-weight:700}.choice input{accent-color:var(--brand)}
+#customFoodWrap{margin-top:12px;display:none}.location-status{margin-top:12px;background:#f3f6fb;border-radius:10px;padding:11px 13px;font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.restaurant{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fff;display:flex;flex-direction:column;gap:6px}.restaurant h3{font-size:16px;margin:0}.tag{display:inline-block;font-size:11px;border-radius:6px;background:#eef2f8;padding:3px 7px;margin-right:4px;color:#43516a}.restaurant .meta{font-size:12px;color:var(--muted)}.restaurant .menu{font-size:13px}.restaurant .actions{display:flex;gap:7px;margin-top:auto;padding-top:7px}.restaurant .actions button{padding:8px 10px;font-size:12px}.restaurant .actions button:last-child{background:#edf1f8;color:var(--ink)}
+.notice{padding:12px 14px;border-radius:11px;background:#fff7e8;color:#805000;font-size:13px;margin-top:12px}
+.empty{padding:24px;text-align:center;border:1px dashed #cbd4e3;border-radius:12px;color:var(--muted);font-size:14px}
+.history-item{padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.history-item:last-child{border:0}.history-item strong{display:block}.success{display:none;background:#eaf8ef;border:1px solid #c5e8d0;border-radius:14px;padding:18px;margin-top:13px;color:#135d35}.success h3{margin:0 0 4px}.success p{margin:0;font-size:14px}
+footer{max-width:1080px;margin:0 auto;padding:0 18px 28px;color:var(--muted);font-size:12px}
+@media(max-width:800px){main{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}.panel{padding:17px}.choice-grid.five{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:480px){.cards{grid-template-columns:1fr}.choice-grid,.choice-grid.five{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{padding:0 4px}.panel{border-radius:14px}}
+</style>
+</head>
+<body>
+<header><div class="hero"><div class="eyebrow">LUNCH DECISION HELPER</div><h1>오늘 뭐 먹지? 🍽️</h1><p>메뉴 고민은 짧게, 맛있는 점심은 확실하게. 신한대학교 제1캠퍼스와 망월사역 주변에 실제 등록된 식당을 기준으로 골라보세요.</p></div></header>
+<main>
+<section>
+  <div class="panel">
+    <div class="step">STEP 1</div><h2>어디에서 찾을까요?</h2>
+    <p class="muted">위치를 등록하면 가까운 식당을 우선으로 볼 수 있어요. 위치 권한이 안 되면 학교 주변 기준으로 이용하세요.</p>
+    <div class="row"><button id="locBtn">현재 위치 등록</button><button id="schoolBtn" class="secondary">신한대 제1캠퍼스 기준</button></div>
+    <div class="location-status" id="locationStatus">아직 위치를 등록하지 않았어요. 학교 기준 버튼을 누르면 주변 식당 목록을 볼 수 있어요.</div>
+  </div>
+  <div class="panel">
+    <div class="step">STEP 2</div><h2>면? 밥? 다른 음식?</h2>
+    <div class="choice-grid">
+      <label class="choice"><input type="radio" name="base" value="면"> 🍜 면</label>
+      <label class="choice"><input type="radio" name="base" value="밥"> 🍚 밥</label>
+      <label class="choice"><input type="radio" name="base" value="기타"> ✨ 기타</label>
+    </div>
+    <div id="customFoodWrap"><label for="customFood" class="muted">어떤 음식이 먹고 싶나요?</label><input id="customFood" type="text" placeholder="예: 고기, 샐러드, 분식, 국물"></div>
+  </div>
+  <div class="panel">
+    <div class="step">STEP 3</div><h2>어떤 종류가 좋을까요?</h2>
+    <div class="choice-grid five">
+      <label class="choice"><input type="checkbox" name="cuisine" value="중식"> 중식</label>
+      <label class="choice"><input type="checkbox" name="cuisine" value="일식"> 일식</label>
+      <label class="choice"><input type="checkbox" name="cuisine" value="양식"> 양식</label>
+      <label class="choice"><input type="checkbox" name="cuisine" value="한식"> 한식</label>
+      <label class="choice"><input type="checkbox" name="cuisine" value="기타"> 기타</label>
+    </div>
+    <div id="customCuisineWrap" style="display:none;margin-top:12px"><label class="muted" for="customCuisine">원하는 음식 종류</label><input id="customCuisine" type="text" placeholder="예: 분식, 베트남 음식, 샐러드"></div>
+    <div class="row" style="margin-top:14px"><button id="findBtn">조건에 맞는 식당 찾기</button><button id="resetBtn" class="secondary">조건 초기화</button></div>
+    <div id="filterMessage" class="muted" style="margin-top:10px">먼저 위치와 음식 조건을 선택해 주세요.</div>
+    <div id="restaurantList" class="cards"><div class="empty" style="grid-column:1/-1">조건을 선택한 뒤 식당을 찾아보세요.</div></div>
+    <div class="notice">※ 외부 API 없이 작동하는 단일 HTML 앱입니다. 식당명·주소·일부 영업시간은 온라인 장소 정보에서 확인한 주변 매장 기준이며, 브레이크타임과 휴무일 등 확인되지 않은 값은 ‘확인 필요’로 표시했습니다. 운영 정보는 바뀔 수 있으니 방문 전 지도/매장 공지로 확인해 주세요.</div>
+  </div>
+  <div class="panel">
+    <div class="step">STEP 4</div><h2>최종 선택 기록하기</h2>
+    <label for="finalRestaurant" class="muted">실제로 선택한 식당 이름</label>
+    <div class="row" style="margin-top:7px"><input id="finalRestaurant" class="grow" type="text" placeholder="예: 오늘은 ○○식당"><button id="saveBtn">선택 완료</button></div>
+    <div id="successBox" class="success"><h3>맛있게 드세요! 😋</h3><p id="successText"></p></div>
+    <p class="muted">선택한 식당은 이 브라우저에 저장되며 최근 3일 동안 추천에서 제외됩니다. 전체 기록은 7일이 지나도 삭제되지 않아요.</p>
+  </div>
+</section>
+<aside>
+  <div class="panel"><h2>📍 기준 위치</h2><p><strong>신한대학교 제1캠퍼스</strong></p><p class="muted">경기도 의정부시 호암로 95 일대</p><button class="ghost" id="mapBtn" style="width:100%">지도에서 주변 식당 보기 ↗</button><p class="muted">지도 링크는 외부 브라우저에서 열립니다.</p></div>
+  <div class="panel"><h2>🕒 최근 선택 기록</h2><p class="muted">최근 3일 선택은 추천에서 제외하고, 7일 이내 기록도 별도로 확인할 수 있어요.</p><div id="historyList"></div><button class="secondary" id="exportBtn" style="width:100%;margin-top:12px">기록 내보내기 (.json)</button><button class="ghost" id="clearHistoryBtn" style="width:100%;margin-top:8px">기록 전체 삭제</button></div>
+  <div class="panel"><h2>사용 팁</h2><p class="muted">① 위치 등록 → ② 면/밥/기타 선택 → ③ 음식 종류 선택 → ④ 식당을 골라 기록하세요.</p><p class="muted">조건을 여러 개 고르면 선택한 종류 중 하나라도 맞는 식당을 보여줘요. 면과 밥을 모두 파는 곳은 두 조건 모두에 포함됩니다.</p></div>
+</aside>
+</main>
+<footer>메뉴 추천 · 데이터는 현재 사용 중인 브라우저의 localStorage에 저장됩니다. 다른 기기/브라우저와 기록이 공유되지 않습니다.</footer>
+<script>
+"use strict";
+
+/*
+ * 식당 데이터 수정 안내:
+ * 이 앱은 외부 API를 사용하지 않으므로 실시간 식당/영업정보를 자동으로 가져오지 않습니다.
+ * 식당명과 주소는 신한대 제1캠퍼스·망월사역 주변에서 확인되는 매장 위주로 등록했습니다.
+ * 확인되지 않은 브레이크타임·휴무일·세부 메뉴는 ‘확인 필요’로 표시합니다. 운영 정보는 방문 전 재확인하세요.
+ */
+const restaurants = [
+ {name:"강셰프맛집", address:"경기 의정부시 호원동 119-257 일대", distance:0.3, base:["밥","기타"], cuisine:["한식","기타"], menu:"족발·한식 식사 메뉴 (세부 메뉴는 매장 확인)", open:"매일 11:00–22:00(등록 정보 기준)", breakTime:"확인 필요", closed:"등록 정보상 매일 운영, 방문 전 확인", keywords:["족발","고기","한식","제육"]},
+ {name:"신한대구내식당", address:"경기 의정부시 호암로 95, 신한대학교 제1캠퍼스", distance:0.1, base:["밥","기타"], cuisine:["한식","기타"], menu:"구내식당 식단 — 당일 메뉴 확인 필요", open:"확인 필요", breakTime:"확인 필요", closed:"확인 필요", keywords:["학식","구내식당","밥","백반"]},
+ {name:"국수나무 망월사역점", address:"경기 의정부시 평화로 206, 호원동", distance:0.4, base:["면","밥","기타"], cuisine:["한식","일식","기타"], menu:"국수·우동·소바·덮밥·돈가스 등", open:"매일 10:15–21:00(등록 정보 기준)", breakTime:"확인 필요", closed:"등록 정보상 매일 운영, 방문 전 확인", keywords:["국수","우동","소바","덮밥","돈가스","면","밥"]},
+ {name:"랑차이", address:"경기 의정부시 평화로 220, 다메오상가 2층", distance:0.4, base:["면","밥"], cuisine:["중식"], menu:"유니짜장·짬뽕·찹쌀탕수육 등", open:"11:00–21:00(등록 정보 기준)", breakTime:"확인 필요", closed:"확인 필요", keywords:["중식","짜장","짬뽕","탕수육","볶음밥","면","밥"]},
+ {name:"모모돈까스", address:"경기 의정부시 평화로 220, 다메오상가 2층 201호", distance:0.4, base:["밥","면","기타"], cuisine:["일식","양식"], menu:"돈까스·함박·생선까스·냉모밀·제육덮밥", open:"11:00–21:30(등록 정보 기준, 일부 요일 정보 확인 필요)", breakTime:"확인 필요", closed:"확인 필요", keywords:["돈까스","함박","생선까스","냉모밀","제육","덮밥","밥","면"]},
+ {name:"바사카츠", address:"경기 의정부시 망월로 10, 신일스카이빌 1층", distance:0.5, base:["밥","면","기타"], cuisine:["일식","양식"], menu:"등심·안심 돈까스 정식·냉모밀·소바·라멘·우동·제육덮밥", open:"11:00–20:00(등록 정보 기준, 일부 요일 정보 확인 필요)", breakTime:"확인 필요", closed:"확인 필요", keywords:["돈까스","냉모밀","소바","라멘","우동","제육덮밥","밥","면"]},
+ {name:"원도봉산 감자탕", address:"경기 의정부시 망월로 14", distance:0.6, base:["밥","기타"], cuisine:["한식"], menu:"감자탕·찌개류·식사 메뉴", open:"확인 필요", breakTime:"확인 필요", closed:"확인 필요", keywords:["감자탕","국물","한식","밥","찌개"]},
+ {name:"공들인감자탕 본점", address:"경기 의정부시 평화로 206", distance:0.5, base:["밥","기타"], cuisine:["한식"], menu:"감자탕·뼈해장국 등", open:"확인 필요", breakTime:"확인 필요", closed:"확인 필요", keywords:["감자탕","뼈해장국","국물","한식","밥"]},
+ {name:"면사무소", address:"경기 의정부시 평화로 196 일대", distance:0.5, base:["면"], cuisine:["한식","기타"], menu:"면 요리 — 세부 메뉴 확인 필요", open:"확인 필요", breakTime:"확인 필요", closed:"확인 필요", keywords:["면","국수","칼국수","국물"]},
+ {name:"마포육곳간 망월사점", address:"경기 의정부시 평화로 201", distance:0.5, base:["밥","기타"], cuisine:["한식"], menu:"고기구이·식사 메뉴", open:"확인 필요", breakTime:"확인 필요", closed:"확인 필요", keywords:["고기","구이","한식","밥","삼겹살"]},
+ {name:"백채김치찌개 망월사역점", address:"경기 의정부시 평화로 220 일대", distance:0.6, base:["밥","기타"], cuisine:["한식"], menu:"김치찌개·돼지고기 김치찌개", open:"확인 필요", breakTime:"확인 필요", closed:"확인 필요", keywords:["김치찌개","찌개","한식","밥","돼지고기"]},
+ {name:"신가네춘천닭갈비야채곱창", address:"경기 의정부시 평화로 197", distance:0.6, base:["밥","기타"], cuisine:["한식"], menu:"춘천닭갈비·야채곱창", open:"확인 필요", breakTime:"확인 필요", closed:"확인 필요", keywords:["닭갈비","곱창","고기","한식","밥"]},
+ {name:"누들아한타이 망월사점", address:"경기 의정부시 호원동 460-2 일대, 2층", distance:0.7, base:["면","밥","기타"], cuisine:["기타"], menu:"쌀국수·팟타이·커리·볶음밥", open:"매일 11:00–21:30(등록 정보 기준)", breakTime:"확인 필요", closed:"등록 정보상 매일 운영, 방문 전 확인", keywords:["태국","쌀국수","팟타이","커리","볶음밥","면","밥"]},
+ {name:"황금코다리 망월사역점", address:"경기 의정부시 호원동 463-1 일대", distance:0.7, base:["밥","기타"], cuisine:["한식"], menu:"코다리조림·생선 한식 메뉴", open:"매일 11:00–21:00(등록 정보 기준)", breakTime:"확인 필요", closed:"등록 정보상 매일 운영, 방문 전 확인", keywords:["코다리","생선","조림","한식","밥"]},
+ {name:"만원집", address:"경기 의정부시 평화로 188", distance:0.8, base:["밥","기타"], cuisine:["한식"], menu:"삼겹살·안창살 고추장삼겹살 등", open:"화–일 11:00–22:00(정보 확인일 2026-09-19 기준)", breakTime:"확인 필요", closed:"매주 월요일(등록 정보 기준)", keywords:["삼겹살","고기","구이","한식","밥"]}
+];
+
+const HISTORY_KEY = "menu-recommend-history-v1";
+let locationMode = "school";
+let currentResults = [];
+
+function getHistory(){ try { const x=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]"); return Array.isArray(x)?x:[]; } catch(e){ return []; } }
+function setHistory(list){ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); renderHistory(); }
+function dateText(value){ return new Date(value).toLocaleString("ko-KR",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+function daysAgo(time){ return (Date.now()-new Date(time).getTime())/(1000*60*60*24); }
+function excludedRecently(name, days){ return getHistory().some(h=>h.name.toLowerCase()===name.toLowerCase() && daysAgo(h.date)<days); }
+function selectedValues(name){ return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(el=>el.value); }
+function clean(s){ return (s||"").trim().toLowerCase(); }
+
+document.querySelectorAll('input[name="base"]').forEach(el=>el.addEventListener("change",()=>{
+ document.getElementById("customFoodWrap").style.display=el.value==="기타"&&el.checked?"block":(document.querySelector('input[name="base"]:checked')?.value==="기타"?"block":"none");
+}));
+document.querySelectorAll('input[name="cuisine"]').forEach(el=>el.addEventListener("change",()=>{
+ document.getElementById("customCuisineWrap").style.display=selectedValues("cuisine").includes("기타")?"block":"none";
+}));
+
+document.getElementById("locBtn").addEventListener("click",()=>{
+ const status=document.getElementById("locationStatus");
+ if(!navigator.geolocation){status.textContent="이 브라우저는 위치 기능을 지원하지 않아요. 학교 기준 버튼을 이용해 주세요.";return;}
+ status.textContent="현재 위치를 확인하고 있어요…";
+ navigator.geolocation.getCurrentPosition(pos=>{
+   locationMode="current";
+   const lat=pos.coords.latitude.toFixed(4), lon=pos.coords.longitude.toFixed(4);
+   status.textContent=`현재 위치가 등록됐어요 (위도 ${lat}, 경도 ${lon}). 단, 식당 거리순 실시간 검색은 외부 API가 없어 학교 주변 예시 목록으로 제공됩니다.`;
+ },()=>{status.textContent="위치 권한을 확인할 수 없어요. 브라우저 위치 권한을 허용하거나 학교 기준 버튼을 이용해 주세요.";},{enableHighAccuracy:false,timeout:8000,maximumAge:300000});
+});
+document.getElementById("schoolBtn").addEventListener("click",()=>{
+ locationMode="school";
+ document.getElementById("locationStatus").textContent="신한대학교 제1캠퍼스를 기준 위치로 선택했어요. 식당 목록은 앱에 등록된 데이터만 표시됩니다.";
+});
+document.getElementById("mapBtn").addEventListener("click",()=>window.open("https://www.google.com/maps/search/식당+신한대학교+제1캠퍼스/","_blank","noopener"));
+
+function matchCustom(restaurant, text){
+ const q=clean(text);
+ if(!q) return false;
+ return restaurant.keywords.some(k=>clean(k).includes(q)||q.includes(clean(k))) ||
+        clean(restaurant.menu).includes(q)||clean(restaurant.name).includes(q);
+}
+function findRestaurants(){
+ const base=document.querySelector('input[name="base"]:checked')?.value;
+ const cuisine=selectedValues("cuisine");
+ const customFood=document.getElementById("customFood").value.trim();
+ const customCuisine=document.getElementById("customCuisine").value.trim();
+ const msg=document.getElementById("filterMessage");
+ if(!locationMode){msg.textContent="먼저 위치를 등록해 주세요.";return;}
+ if(!base){msg.textContent="면, 밥, 기타 중 하나를 선택해 주세요.";return;}
+ if(base==="기타"&&!customFood){msg.textContent="기타를 선택했다면 먹고 싶은 음식 기준을 입력해 주세요.";document.getElementById("customFood").focus();return;}
+ if(!cuisine.length){msg.textContent="음식 종류를 하나 이상 선택해 주세요.";return;}
+ if(cuisine.includes("기타")&&!customCuisine){msg.textContent="음식 종류의 기타 기준을 입력해 주세요.";document.getElementById("customCuisine").focus();return;}
+ let list=restaurants.filter(r=>{
+   const baseMatch=base==="기타"?matchCustom(r,customFood):r.base.includes(base);
+   const cuisineMatch=cuisine.some(c=>c==="기타"?matchCustom(r,customCuisine):r.cuisine.includes(c));
+   return baseMatch&&cuisineMatch&&!excludedRecently(r.name,3);
+ });
+ list.sort((a,b)=>a.distance-b.distance);
+ currentResults=list;
+ msg.textContent=`조건에 맞는 식당 ${list.length}곳 · 최근 3일 내 선택한 식당 제외 · 가까운 순`;
+ renderRestaurants(list);
+}
+function renderRestaurants(list){
+ const box=document.getElementById("restaurantList");
+ if(!list.length){box.innerHTML='<div class="empty" style="grid-column:1/-1">조건에 맞는 식당이 없어요.<br>다른 메뉴 종류를 선택하거나 기록된 식당을 확인해 주세요.</div>';return;}
+ box.innerHTML=list.map((r,i)=>`<article class="restaurant">
+ <div><span class="tag">${r.distance.toFixed(1)}km 내외(예시)</span>${r.cuisine.map(c=>`<span class="tag">${c}</span>`).join("")}</div>
+ <h3>${escapeHtml(r.name)}</h3><div class="menu">🍴 ${escapeHtml(r.menu)}</div>
+ <div class="meta">📍 ${escapeHtml(r.address)}</div>
+ <div class="meta">영업시간: ${escapeHtml(r.open)} · 브레이크타임: ${escapeHtml(r.breakTime)}</div>
+ <div class="meta">휴무일: ${escapeHtml(r.closed)}</div>
+ <div class="actions"><button data-pick="${i}">이 식당 선택</button><button data-map="${i}">지도 검색</button></div>
+ </article>`).join("");
+ box.querySelectorAll("[data-pick]").forEach(btn=>btn.addEventListener("click",()=>{
+  document.getElementById("finalRestaurant").value=list[Number(btn.dataset.pick)].name;
+  document.getElementById("finalRestaurant").focus();
+ }));
+ box.querySelectorAll("[data-map]").forEach(btn=>btn.addEventListener("click",()=>{
+  const r=list[Number(btn.dataset.map)];
+  window.open("https://www.google.com/maps/search/"+encodeURIComponent(r.name+" "+r.address)," _blank".trim(),"noopener");
+ }));
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+document.getElementById("findBtn").addEventListener("click",findRestaurants);
+document.getElementById("resetBtn").addEventListener("click",()=>{
+ document.querySelectorAll('input[name="base"],input[name="cuisine"]').forEach(el=>el.checked=false);
+ document.getElementById("customFood").value="";document.getElementById("customCuisine").value="";
+ document.getElementById("customFoodWrap").style.display="none";document.getElementById("customCuisineWrap").style.display="none";
+ document.getElementById("filterMessage").textContent="조건을 초기화했어요. 새 조건을 선택해 주세요.";
+ document.getElementById("restaurantList").innerHTML='<div class="empty" style="grid-column:1/-1">조건을 선택한 뒤 식당을 찾아보세요.</div>';
+ currentResults=[];
+});
+document.getElementById("saveBtn").addEventListener("click",()=>{
+ const input=document.getElementById("finalRestaurant"), name=input.value.trim();
+ if(!name){alert("최종 선택한 식당 이름을 입력해 주세요.");input.focus();return;}
+ const history=getHistory();
+ history.unshift({name,date:new Date().toISOString(),location:locationMode});
+ setHistory(history);
+ document.getElementById("successText").textContent=`${name} 선택을 기록했어요. 다음 추천에서는 3일 동안 제외됩니다.`;
+ document.getElementById("successBox").style.display="block";
+ document.getElementById("finalRestaurant").value="";
+ document.getElementById("resetBtn").click();
+});
+function renderHistory(){
+ const box=document.getElementById("historyList"), history=getHistory();
+ if(!history.length){box.innerHTML='<div class="empty">아직 선택 기록이 없어요.</div>';return;}
+ box.innerHTML=history.slice(0,12).map(h=>`<div class="history-item"><strong>${escapeHtml(h.name)}</strong><span class="muted">${dateText(h.date)} · ${daysAgo(h.date)<3?"최근 3일 제외 대상":daysAgo(h.date)<7?"일주일 이내 기록":"이전 기록"}</span></div>`).join("");
+}
+document.getElementById("exportBtn").addEventListener("click",()=>{
+ const blob=new Blob([JSON.stringify(getHistory(),null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob), a=document.createElement("a");
+ a.href=url;a.download="menu-recommend-history.json";a.click();URL.revokeObjectURL(url);
+});
+document.getElementById("clearHistoryBtn").addEventListener("click",()=>{
+ if(confirm("저장된 선택 기록을 모두 삭제할까요? 이 작업은 되돌릴 수 없어요.")){localStorage.removeItem(HISTORY_KEY);renderHistory();}
+});
+renderHistory();
+</script>
+</body>
+</html>
